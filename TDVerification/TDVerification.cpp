@@ -1618,11 +1618,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             int wmId = LOWORD(wParam);
             HRESULT t;
-            // Parse the menu selections:
+            
             switch (wmId)
             {
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+                break;
+            case ID_HELP_README:
+                DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hWnd, About);
                 break;
             case ID_VERIFY_AUTO:
                 t = BasicFileOpen(hWnd);
