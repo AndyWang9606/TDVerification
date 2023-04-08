@@ -82,6 +82,7 @@ std::string CountryCode[] = {
 "CYM",
 "CYP",
 "CZE",
+"D<<",
 "DEU",
 "DJI",
 "DMA",
@@ -102,7 +103,12 @@ std::string CountryCode[] = {
 "FRO",
 "FSM",
 "GAB",
+"GBD",
+"GBN",
+"GBO",
+"GBP",
 "GBR",
+"GBS",
 "GEO",
 "GGY",
 "GHA",
@@ -256,6 +262,9 @@ std::string CountryCode[] = {
 "UGA",
 "UKR",
 "UMI",
+"UNA",
+"UNK",
+"UNO",
 "URY",
 "USA",
 "UZB",
@@ -268,6 +277,12 @@ std::string CountryCode[] = {
 "VUT",
 "WLF",
 "WSM",
+"XCC",
+"XOM",
+"XXA",
+"XXB",
+"XXC",
+"XXX",
 "YEM",
 "ZAF",
 "ZMB",
@@ -432,7 +447,8 @@ int binarySearch(int start, int end, std::string code)
     }
     return -1;
 }
-int CountryCodeCheck(int TDType)
+// Add in code-x parameter for multiple incorrect country code
+int CountryCodeCheck(int TDType, int code)
 {
     std::string code1, code2;
     switch (TDType)
@@ -440,11 +456,11 @@ int CountryCodeCheck(int TDType)
     case 1:   //Passport
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(55, 3);
-        if(binarySearch(0, 248, code1) == -1)
+        if(binarySearch(0, 248, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1)
+        if (binarySearch(0, 248, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -452,11 +468,11 @@ int CountryCodeCheck(int TDType)
     case 2:   //VisaA
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(55, 3);
-        if (binarySearch(0, 248, code1) == -1)
+        if (binarySearch(0, 248, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1)
+        if (binarySearch(0, 248, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -464,11 +480,11 @@ int CountryCodeCheck(int TDType)
     case 3:   //VisaB
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(47, 3);
-        if (binarySearch(0, 248, code1) == -1)
+        if (binarySearch(0, 248, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1)
+        if (binarySearch(0, 248, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -476,11 +492,11 @@ int CountryCodeCheck(int TDType)
     case 4:   //TD1
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(46, 3);
-        if (binarySearch(0, 248, code1) == -1)
+        if (binarySearch(0, 248, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1)
+        if (binarySearch(0, 248, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -488,11 +504,11 @@ int CountryCodeCheck(int TDType)
     case 5:   //TD2
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(47, 3);
-        if (binarySearch(0, 248, code1) == -1)
+        if (binarySearch(0, 248, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1)
+        if (binarySearch(0, 248, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -738,9 +754,11 @@ bool TotalCheckDigitVisaA(int a[])
 
 /* Description: Checks if passport is valid
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   Nov. 21, 2021
  *
- * Return: 0 - succeed,
+ * Return: 
+ * Array that stores errors based on index:
+ *         0 - Succeed,
  *         1 - First Check Digit Failed,
  *         2 - Second Check Digit Failed,
  *         3 - Third Check Digit Failed,
@@ -750,50 +768,54 @@ bool TotalCheckDigitVisaA(int a[])
  *         7 - Invalid Second Country Code,
  *         8 - Invalid Document Type
  *********************************/
-int VerifyPassport()
+int* VerifyPassport()
 {
+    static int errors[8];
+    std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     ConvertCharToInt(45, 44, data);
     if (DocTypeCheck(1) == false)
     {
-        return 8;
+        errors[7] = 8;
     }
-    if (CountryCodeCheck(1) == 1)
+    if (CountryCodeCheck(1, 1) == 1)
     {
-        return 6;
+        errors[5] = 6;
     }
-    if (CountryCodeCheck(1) == 2)
+    if (CountryCodeCheck(1, 2) == 2)
     {
-        return 7;
+        errors[6] = 7;
     }
     if (!CheckDigit(45, 10, data))
     {
-        return 1;
+        errors[0] = 1;
     }
     if (!CheckDigit(58, 7, data))
     {
-        return 2;
+        errors[1] = 2;
     }
     if (!CheckDigit(66, 7, data))
     {
-        return 3;
+        errors[2] = 3;
     }
     if (!CheckDigit(73, 15, data))
     {
-        return 4;
+        errors[3] = 4;
     }
     if (!TotalCheckDigitPassport(data))
     {
-        return 5;
+        errors[4] = 5;
     }
-    return 0;
+    return errors;
 }
 
 /* Description: Checks if Visa Type A is valid
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   Nov. 21, 2021
  *
- * Return: 0 - succeed,
+ * Return: 
+ * Array that stores errors based on index:
+ *         0 - succeed,
  *         1 - First Check Digit Failed,
  *         2 - Second Check Digit Failed,
  *         3 - Third Check Digit Failed,
@@ -803,50 +825,53 @@ int VerifyPassport()
  *         7 - Invalid Second Country Code
  *         8 - Invalid Document Type
  *********************************/
-int VerifyVisaA()
-{
+int* VerifyVisaA() {
+    static int errors[8];
+    std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     ConvertCharToInt(45, 44, data);
     if (DocTypeCheck(2) == false)
     {
-        return 8;
+        errors[7] = 8;
     }
-    if (CountryCodeCheck(2) == 1)
+    if (CountryCodeCheck(2, 1) == 1)
     {
-        return 6;
+        errors[5] = 6;
     }
-    if (CountryCodeCheck(2) == 2)
+    if (CountryCodeCheck(2, 2) == 2)
     {
-        return 7;
+        errors[6] = 7;
     }
     if (!CheckDigit(45, 10, data))
     {
-        return 1;
+        errors[0] = 1;
     }
     if (!CheckDigit(58, 7, data))
     {
-        return 2;
+        errors[1] = 2;
     }
     if (!CheckDigit(66, 7, data))
     {
-        return 3;
+        errors[2] = 3;
     }
     if (!CheckDigit(73, 15, data))
     {
-        return 4;
+        errors[3] = 4;
     }
     if (!TotalCheckDigitVisaA(data))
     {
-        return 5;
+        errors[4] = 5;
     }
-    return 0;
+    return errors;
 }
 
 /* Description: Checks if passport is valid
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   Nov. 21, 2021
  *
- * Return: 0 - succeed, 
+ * Return: 
+ * Array that stores errors based on index:
+ *         0 - succeed, 
  *         1 - First Check Digit Failed, 
  *         2 - Second Check Digit Failed,
  *         3 - Third Check Digit Failed, 
@@ -854,42 +879,45 @@ int VerifyVisaA()
  *         5 - Invalid Second Country Code
  *         6 - Invalid Document Type
  *********************************/
-int VerifyVisaB()
-{
+int* VerifyVisaB() {
+    static int errors[6];
+    std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     ConvertCharToInt(37, 36, data);
     if (DocTypeCheck(2) == false)
     {
-        return 6;
+        errors[5] = 6;
     }
-    if (CountryCodeCheck(3) == 1)
+    if (CountryCodeCheck(3, 1) == 1)
     {
-        return 4;
+        errors[3] = 4;
     }
-    if (CountryCodeCheck(3) == 2)
+    if (CountryCodeCheck(3, 2) == 2)
     {
-        return 5;
+        errors[4] = 5;
     }
     if (!CheckDigit(37, 10, data))
     {
-        return 1;
+        errors[0] = 1;
     }
     if (!CheckDigit(50, 7, data))
     {
-        return 2;
+        errors[1] = 2;
     }
     if (!CheckDigit(58, 7, data))
     {
-        return 3;
+        errors[2] = 3;
     }
-    return 0;
+    return errors;
 }
 
 /* Description: Checks if Travel Document Ver. 1 is valid
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   Nov. 21, 2021
  *
- * Return: 0 - succeed, 
+ * Return: 
+ * Array that stores errors based on index:
+ *         0 - succeed, 
  *         1 - First Check Digit Failed, 
  *         2 - Second Check Digit Failed,
  *         3 - Third Check Digit Failed, 
@@ -899,35 +927,36 @@ int VerifyVisaB()
  *         7 - Invalid Document Type,
  *         10 - Optional Check Digit Failed
  *********************************/
-int VerifyTD1()
-{
+int* VerifyTD1() {
+    static int errors[8];
+    std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     int i;
     int index = 0;
     ConvertCharToInt(0, 61, data);
     if (DocTypeCheck(3) == false)
     {
-        return 7;
+        errors[6] = 7;
     }
-    if (CountryCodeCheck(4) == 1)
+    if (CountryCodeCheck(4, 1) == 1)
     {
-        return 5;
+        errors[4] = 5;
     }
-    if (CountryCodeCheck(4) == 2)
+    if (CountryCodeCheck(4, 2) == 2)
     {
-        return 6;
+        errors[5] = 6;
     }
     if (TotalLine[14] != '<')
     {
         if (!CheckDigit(5, 10, data))
         {
-            return 1;
+            errors[0] = 1;
         }
         if (TotalLine[29] != '<')
         {
             if (!CheckDigit(15, 15, data))
             {
-                return 10;
+                errors[7] = 10;
             }
         }
     }
@@ -943,30 +972,32 @@ int VerifyTD1()
         }
         if (!CheckDigit(5, index - 5, data))
         {
-            return 1;
+            errors[0] = 1;
         }
     }
     if (!CheckDigit(31, 7, data))
     {
-        return 2;
+        errors[1] = 2;
     }
     if (!CheckDigit(39, 7, data))
     {
-        return 3;
+        errors[2] = 3;
     }
     if (!TotalCheckDigitTD1(data))
     {
-        return 4;
+        errors[3] = 4;
     }
-    return 0;
+    return errors;
 
 }
 
 /* Description: Checks if Travel Document Ver. 2 is valid
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   Nov. 21, 2021
  *
- * Return: 0 - succeed, 
+ * Return: 
+ * Array that stores errors based on index:
+ *         0 - succeed, 
  *         1 - First Check Digit Failed, 
  *         2 - Second Check Digit Failed,
  *         3 - Third Check Digit Failed, 
@@ -976,35 +1007,37 @@ int VerifyTD1()
  *         7 - Invalid Docuent Type,
  *         10 - Optional Check Digit Failed
  *********************************/
-int VerifyTD2()
+int* VerifyTD2()
 {
+    static int errors[8];
+    std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     int i;
     int index;
     ConvertCharToInt(37, 36, data);
     if (DocTypeCheck(3) == false)
     {
-        return 7;
+        errors[6] = 7;
     }
-    if (CountryCodeCheck(5) == 1)
+    if (CountryCodeCheck(5, 1) == 1)
     {
-        return 5;
+        errors[4] = 5;
     }
-    if (CountryCodeCheck(5) == 2)
+    if (CountryCodeCheck(5, 2) == 2)
     {
-        return 6;
+        errors[5] = 6;
     }
     if (!CheckDigit(37, 10, data))
     {
-        return 1;
+        errors[0] = 1;
     }
     if (!CheckDigit(50, 7, data))
     {
-        return 2;
+        errors[1] = 2;
     }
     if (!CheckDigit(58, 7, data))
     {
-        return 3;
+        errors[2] = 3;
     }
     if (TotalLine[65] != '<')
     {
@@ -1018,14 +1051,14 @@ int VerifyTD2()
         }
         if (!CheckDigit(65, index - 65, data))
         {
-            return 10;
+            errors[7] = 10;
         }
     }
     if (!TotalCheckDigitTD2(data))
     {
-        return 4;
+        errors[3] = 4;
     }
-    return 0;
+    return errors;
 }
 
 // This code snippet demonstrates how to work with the common file dialog interface
@@ -1103,13 +1136,104 @@ HRESULT BasicFileOpen(HWND hWnd)
 
 void PassportCheck()
 {
-    int t;
+    int* t;
+    int counter = 0;
     int msgboxID;
     t = VerifyPassport();
     TotalLine.clear();
-    switch (t)
+    for (int i = 0; i < 8; i++)
     {
-    case 0:
+        if (*(t + i) == 0) {
+            counter++;
+            continue;
+        }
+
+        switch (*(t + i))
+        {
+        case 1:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Failed First Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 2:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Failed Second Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 3:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Failed Third Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 4:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Failed Optional Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 5:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Failed Overall Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 6:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Has Invalid First Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 7:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Passport Has Invalid Second Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 8:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Invalid Document Type",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        default:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Error",
+                L"Passport Verification",
+                MB_ICONEXCLAMATION | MB_OK
+            );
+            break; //optional
+        }
+    }
+    if (counter == 8) {
         msgboxID = MessageBox
         (
             NULL,
@@ -1117,102 +1241,107 @@ void PassportCheck()
             L"Passport Verification",
             MB_ICONASTERISK | MB_OK
         );
-        break; //optional
-    case 1:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Failed First Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 2:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Failed Second Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 3:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Failed Third Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 4:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Failed Optional Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 5:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Failed Overall Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 6:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Has Invalid First Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 7:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Passport Has Invalid Second Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 8:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Invalid Document Type",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-
-        // you can have any number of case statements.
-    default: //Optional
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Error",
-            L"Passport Verification",
-            MB_ICONEXCLAMATION | MB_OK
-        );
-        break; //optional
     }
 
 }
-void VisaACheck()
-{
-    int t;
+void VisaACheck() {
+    int* t;
     int msgboxID;
+    int counter = 0;
     t = VerifyVisaA();
     TotalLine.clear();
-    switch (t)
-    {
-    case 0:
+    for (int i = 0; i < 8; i++) {
+        if (*(t + i) == 0) {
+            counter++;
+            continue;
+        }
+        switch (*(t + i))
+        {
+        case 1:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Failed First Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 2:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Failed Second Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 3:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Failed Third Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 4:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Failed Optional Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 5:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Failed Overall Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break;
+        case 6:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Has Invalid First Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 7:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa A Has Invalid Second Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 8:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Invalid Document Type",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+
+        default: //Optional
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Error",
+                L"Passport Verification",
+                MB_ICONEXCLAMATION | MB_OK
+            );
+            break; //optional
+        }
+    }
+    if (counter == 8) {
         msgboxID = MessageBox
         (
             NULL,
@@ -1220,100 +1349,89 @@ void VisaACheck()
             L"Passport Verification",
             MB_ICONASTERISK | MB_OK
         );
-        break; //optional
-    case 1:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Failed First Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 2:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Failed Second Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 3:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Failed Third Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 4:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Failed Optional Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 5:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Failed Overall Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-    case 6:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Has Invalid First Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 7:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa A Has Invalid Second Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 8:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Invalid Document Type",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-
-     // you can have any number of case statements.
-    default: //Optional
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Error",
-            L"Passport Verification",
-            MB_ICONEXCLAMATION | MB_OK
-        );
-        break; //optional
     }
+
 }
-void VisaBCheck()
-{
-    int t;
+void VisaBCheck() {
+    int* t;
     int msgboxID;
+    int counter = 0;
     t = VerifyVisaB();
     TotalLine.clear();
-    switch (t)
+    for (int i = 0; i < 6; i++)
     {
-    case 0:
+        if (*(t + i) == 0) {
+            counter++;
+            continue;
+        }
+        switch (*(t + i))
+        {
+        case 1:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa B Failed First Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 2:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa B Failed Second Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 3:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa B Failed Third Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 4:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa B Has Invalid First Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 5:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Visa B Has Invalid Second Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 6:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Invalid Document Type",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        default: //Optional
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Error",
+                L"Passport Verification",
+                MB_ICONEXCLAMATION | MB_OK
+            );
+            break; //optional
+        }
+    }
+    if (counter == 6) {
         msgboxID = MessageBox
         (
             NULL,
@@ -1321,81 +1439,108 @@ void VisaBCheck()
             L"Passport Verification",
             MB_ICONASTERISK | MB_OK
         );
-        break; //optional
-    case 1:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa B Failed First Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 2:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa B Failed Second Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 3:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa B Failed Third Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 4:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa B Has Invalid First Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 5:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Visa B Has Invalid Second Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 6:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Invalid Document Type",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    default: //Optional
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Error",
-            L"Passport Verification",
-            MB_ICONEXCLAMATION | MB_OK
-        );
-        break; //optional
     }
 }
-void TD1Check() 
+void TD1Check()
 {
-    int t;
+    int* t;
     int msgboxID;
+    int counter = 0;
     t = VerifyTD1();
     TotalLine.clear();
-    switch (t)
+    for (int i = 0; i < 8; i++)
     {
-    case 0:
+        if (*(t + i) == 0) {
+            counter++;
+            continue;
+        }
+        switch (*(t + i))
+        {
+        case 1:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Failed First Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 2:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Failed Second Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 3:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Failed Third Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 4:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Failed Overall Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 5:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Has Invalid First Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 6:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Has Invalid Second Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 7:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Invalid Document Type",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 10:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.1 Failed Optional Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+         // you can have any number of case statements.
+        default: //Optional
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Error",
+                L"Passport Verification",
+                MB_ICONEXCLAMATION | MB_OK
+            );
+            break; //optional
+        }
+    }
+    if (counter == 8) {
         msgboxID = MessageBox
         (
             NULL,
@@ -1403,100 +1548,108 @@ void TD1Check()
             L"Passport Verification",
             MB_ICONASTERISK | MB_OK
         );
-        break; //optional
-    case 1:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Failed First Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 2:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Failed Second Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 3:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Failed Third Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 4:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Failed Overall Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 5:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Has Invalid First Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 6:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Has Invalid Second Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 7:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Invalid Document Type",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 10:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.1 Failed Optional Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-     // you can have any number of case statements.
-    default: //Optional
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Error",
-            L"Passport Verification",
-            MB_ICONEXCLAMATION | MB_OK
-        );
-        break; //optional
     }
 }
 void TD2Check()
 {
-    int t;
+    int* t;
     int msgboxID;
+    int counter = 0;
     t = VerifyTD2();
     TotalLine.clear();
-    switch (t)
+    for (int i = 0; i < 8; i++)
     {
-    case 0:
+        if (*(t + i) == 0) {
+            counter++;
+            continue;
+        }
+        switch (*(t + i))
+        {
+        case 1:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Failed First Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 2:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Failed Second Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 3:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Failed Third Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 4:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Failed Overall Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 5:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Has Invalid First Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 6:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Has Invalid Second Country Code",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 7:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Invalid Document Type",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+        case 10:
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"TD No.2 Failed Optional Check Digit",
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break; //optional
+         // you can have any number of case statements.
+        default: //Optional
+            msgboxID = MessageBox
+            (
+                NULL,
+                L"Error",
+                L"Passport Verification",
+                MB_ICONEXCLAMATION | MB_OK
+            );
+            break; //optional
+        }
+    }
+    if (counter == 8) {
         msgboxID = MessageBox
         (
             NULL,
@@ -1504,89 +1657,6 @@ void TD2Check()
             L"Passport Verification",
             MB_ICONASTERISK | MB_OK
         );
-        break; //optional
-    case 1:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Failed First Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 2:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Failed Second Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 3:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Failed Third Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 4:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Failed Overall Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 5:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Has Invalid First Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 6:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Has Invalid Second Country Code",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 7:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Invalid Document Type",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-    case 10:
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"TD No.2 Failed Optional Check Digit",
-            L"Passport Verification",
-            MB_ICONERROR | MB_OK
-        );
-        break; //optional
-     // you can have any number of case statements.
-    default: //Optional
-        msgboxID = MessageBox
-        (
-            NULL,
-            L"Error",
-            L"Passport Verification",
-            MB_ICONEXCLAMATION | MB_OK
-        );
-        break; //optional
     }
 }
 void ErrorDoc()
@@ -1600,6 +1670,8 @@ void ErrorDoc()
         MB_ICONERROR | MB_OK
     );
 }
+
+
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
