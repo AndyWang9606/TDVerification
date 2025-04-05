@@ -3,6 +3,8 @@
 
 #include "framework.h"
 #include "TDVerification.h"
+#include <locale>
+#include <codecvt>
 #include <string>
 #include <iostream>
 #include <cmath>
@@ -551,14 +553,16 @@ void ConvertCharToInt(int start, int length, int a[])
 
 /* Description: Checks check digit
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   June 7, 2023
  *
- * Return: true - pass check digit; false - fail
+ * Return: 0 or two-digit int
+ *     0 - check sum passed
+ *     xy - check sum failed, where x is the correct digit and y is the digit in the document
  * param [in] start - Index of starting position
  * param [in] length - the number of characters to be read.
  * param [in] a[] - ingeter array to be calculated
  *********************************/
-bool CheckDigit(int start, int length, int a[])
+int CheckDigit(int start, int length, int a[])
 {
     int multiplier[3] = { 7, 3, 1 };
     int i = 0;
@@ -572,22 +576,24 @@ bool CheckDigit(int start, int length, int a[])
     }
     if (s % 10 == a[start + length - 1])
     {
-        return true;
+        return 0;
     }
     else
     {
-        return false;
+        return 10 * (s % 10) + a[start + length - 1];
     }
 }
 
 /* Description: Checks overall check digit for Passport
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   June 7, 2023
  *
- * Return: true - pass check digit; false - fail
+ * Return: 0 or two-digit int
+ *     0 - check sum passed
+ *     xy - check sum failed, where x is the correct digit and y is the digit in the document
  * param [in] a[] - ingeter array to be calculated
  *********************************/
-bool TotalCheckDigitPassport(int a[])
+int TotalCheckDigitPassport(int a[])
 {
     int multiplier[3] = { 7, 3, 1 };
     int i = 0;
@@ -616,22 +622,24 @@ bool TotalCheckDigitPassport(int a[])
     }
     if (s % 10 == a[88])
     {
-        return true;
+        return 0;
     }
     else
     {
-        return false;
+        return 10 * (s % 10) + a[88];
     }
 }
 
 /* Description: Checks overall check digit for Travel Document Ver. 1
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   June 7, 2023
  *
- * Return: true - pass check digit; false - fail
+ * Return: 0 or two-digit int
+ *     0 - check sum passed
+ *     xy - check sum failed, where x is the correct digit and y is the digit in the document
  * param [in] a[] - ingeter array to be calculated
  *********************************/
-bool TotalCheckDigitTD1(int a[])
+int TotalCheckDigitTD1(int a[])
 {
     int multiplier[3] = { 7, 3, 1 };
     int i = 0;
@@ -658,25 +666,27 @@ bool TotalCheckDigitTD1(int a[])
         s = s + a[i] * multiplier[m % 3];
         m++;
     }
-    
+
     if (s % 10 == a[60])
     {
-        return true;
+        return 0;
     }
     else
     {
-        return false;
+        return (s % 10) * 10 + a[60];
     }
 }
 
 /* Description: Checks overall check digit for Travel Document Ver. 2
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   June 7, 2023
  *
- * Return: true - pass check digit; false - fail
+ * Return: 0 or two-digit int
+ *     0 - check sum passed
+ *     xy - check sum failed, where x is the correct digit and y is the digit in the document
  * param [in] a[] - ingeter array to be calculated
  *********************************/
-bool TotalCheckDigitTD2(int a[])
+int TotalCheckDigitTD2(int a[])
 {
     int multiplier[3] = { 7, 3, 1 };
     int i = 0;
@@ -700,22 +710,24 @@ bool TotalCheckDigitTD2(int a[])
     }
     if (s % 10 == a[72])
     {
-        return true;
+        return 0;
     }
     else
     {
-        return false;
+        return (s % 10) * 10 + a[72];
     }
 }
 
 /* Description: Checks overall check digit for Visa Type A
  *
- * Author: Andy Wang   May 11, 2020
+ * Author: Andy Wang   June 7, 2023
  *
- * Return: true - pass check digit; false - fail
+ * Return: 0 or two-digit int
+ *     0 - check sum passed
+ *     xy - check sum failed, where x is the correct digit and y is the digit in the document
  * param [in] a[] - ingeter array to be calculated
  *********************************/
-bool TotalCheckDigitVisaA(int a[])
+int TotalCheckDigitVisaA(int a[])
 {
     int multiplier[3] = { 7, 3, 1 };
     int i = 0;
@@ -744,29 +756,28 @@ bool TotalCheckDigitVisaA(int a[])
     }
     if (s % 10 == a[88])
     {
-        return true;
+        return 0;
     }
     else
     {
-        return false;
+        return (s % 10) * 10 + a[88];
     }
 }
 
 /* Description: Checks if passport is valid
  *
- * Author: Andy Wang   Nov. 21, 2021
+ * Author: Andy Wang   June 7, 2023
  *
  * Return: 
  * Array that stores errors based on index:
- *         0 - Succeed,
- *         1 - First Check Digit Failed,
- *         2 - Second Check Digit Failed,
- *         3 - Third Check Digit Failed,
- *         4 - Overall Check Digit Failed,
- *         5 - Invalid First Country Code,
- *         6 - Invalid Second Country Code,
- *         7 - Invalid Document Type
- *         10 - Optional Check Digit Failed,
+ *         0 - First Check Digit Failed,
+ *         1 - Second Check Digit Failed,
+ *         2 - Third Check Digit Failed,
+ *         3 - Overall Check Digit Failed,
+ *         4 - Invalid First Country Code,
+ *         5 - Invalid Second Country Code,
+ *         6 - Invalid Document Type
+ *         7 - Optional Check Digit Failed
  *********************************/
 int* VerifyPassport()
 {
@@ -786,46 +797,30 @@ int* VerifyPassport()
     {
         errors[5] = 6;
     }
-    if (!CheckDigit(45, 10, data))
-    {
-        errors[0] = 1;
-    }
-    if (!CheckDigit(58, 7, data))
-    {
-        errors[1] = 2;
-    }
-    if (!CheckDigit(66, 7, data))
-    {
-        errors[2] = 3;
-    }
-    if (!CheckDigit(73, 15, data))
-    {
-        errors[7] = 10;
-    }
-    if (!TotalCheckDigitPassport(data))
-    {
-        errors[3] = 4;
-    }
+    errors[0] = CheckDigit(45, 10, data);
+    errors[1] = CheckDigit(58, 7, data);
+    errors[2] = CheckDigit(66, 7, data);
+    errors[7] = CheckDigit(73, 15, data);
+    errors[3] = TotalCheckDigitPassport(data); 
     return errors;
 }
 
 /* Description: Checks if Visa Type A is valid
  *
- * Author: Andy Wang   Nov. 21, 2021
+ * Author: Andy Wang   June 7, 2023
  *
  * Return: 
  * Array that stores errors based on index:
- *         0 - succeed,
- *         1 - First Check Digit Failed,
- *         2 - Second Check Digit Failed,
- *         3 - Third Check Digit Failed,
- *         4 - Overall Check Digit Failed
- *         5 - Invalid First Country Code
- *         6 - Invalid Second Country Code
- *         7 - Invalid Document Type
+ *         0 - First Check Digit Failed,
+ *         1 - Second Check Digit Failed,
+ *         2 - Third Check Digit Failed,
+ *         3 - Overall Check Digit Failed,
+ *         4 - Invalid First Country Code,
+ *         5 - Invalid Second Country Code,
+ *         6 - Invalid Document Type
  *********************************/
 int* VerifyVisaA() {
-    static int errors[8];
+    static int errors[7];
     std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     ConvertCharToInt(45, 44, data);
@@ -841,38 +836,25 @@ int* VerifyVisaA() {
     {
         errors[5] = 6;
     }
-    if (!CheckDigit(45, 10, data))
-    {
-        errors[0] = 1;
-    }
-    if (!CheckDigit(58, 7, data))
-    {
-        errors[1] = 2;
-    }
-    if (!CheckDigit(66, 7, data))
-    {
-        errors[2] = 3;
-    }
-    if (!TotalCheckDigitVisaA(data))
-    {
-        errors[3] = 4;
-    }
+    errors[0] = CheckDigit(45, 10, data);
+    errors[1] = CheckDigit(58, 7, data);
+    errors[2] = CheckDigit(66, 7, data);
+    errors[3] = TotalCheckDigitVisaA(data);
     return errors;
 }
 
-/* Description: Checks if passport is valid
+/* Description: Checks if Visa Type B is valid
  *
- * Author: Andy Wang   Nov. 21, 2021
+ * Author: Andy Wang   June 7, 2023
  *
  * Return: 
  * Array that stores errors based on index:
- *         0 - succeed, 
- *         1 - First Check Digit Failed, 
- *         2 - Second Check Digit Failed,
- *         3 - Third Check Digit Failed, 
- *         4 - Invalid First Country Code,
- *         5 - Invalid Second Country Code
- *         6 - Invalid Document Type
+ *         0 - First Check Digit Failed, 
+ *         1 - Second Check Digit Failed,
+ *         2 - Third Check Digit Failed, 
+ *         3 - Invalid First Country Code,
+ *         4 - Invalid Second Country Code,
+ *         5 - Invalid Document Type
  *********************************/
 int* VerifyVisaB() {
     static int errors[6];
@@ -891,38 +873,28 @@ int* VerifyVisaB() {
     {
         errors[4] = 5;
     }
-    if (!CheckDigit(37, 10, data))
-    {
-        errors[0] = 1;
-    }
-    if (!CheckDigit(50, 7, data))
-    {
-        errors[1] = 2;
-    }
-    if (!CheckDigit(58, 7, data))
-    {
-        errors[2] = 3;
-    }
+    errors[0] = CheckDigit(37, 10, data);
+    errors[1] = CheckDigit(50, 7, data);
+    errors[2] = CheckDigit(58, 7, data);
     return errors;
 }
 
 /* Description: Checks if Travel Document Ver. 1 is valid
  *
- * Author: Andy Wang   Nov. 21, 2021
+ * Author: Andy Wang   June 7, 2023
  *
  * Return: 
  * Array that stores errors based on index:
- *         0 - succeed, 
- *         1 - First Check Digit Failed, 
- *         2 - Second Check Digit Failed,
- *         3 - Third Check Digit Failed, 
- *         4 - Overall Check Digit Failed,
- *         5 - Invalid First Country Code,
- *         6 - Invalid Second Country Code,
- *         7 - Invalid Document Type
+ *         0 - First Check Digit Failed, 
+ *         1 - Second Check Digit Failed,
+ *         2 - Third Check Digit Failed, 
+ *         3 - Overall Check Digit Failed,
+ *         4 - Invalid First Country Code,
+ *         5 - Invalid Second Country Code,
+ *         6 - Invalid Document Type
  *********************************/
 int* VerifyTD1() {
-    static int errors[8];
+    static int errors[7];
     std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     int i;
@@ -942,10 +914,7 @@ int* VerifyTD1() {
     }
     if (TotalLine[14] != '<')
     {
-        if (!CheckDigit(5, 10, data))
-        {
-            errors[0] = 1;
-        }
+        errors[0] = CheckDigit(5, 10, data);
     }
     else
     {
@@ -957,45 +926,32 @@ int* VerifyTD1() {
                 break;
             }
         }
-        if (!CheckDigit(5, index - 5, data))
-        {
-            errors[0] = 1;
-        }
+        errors[0] = CheckDigit(5, index - 5, data);
     }
-    if (!CheckDigit(31, 7, data))
-    {
-        errors[1] = 2;
-    }
-    if (!CheckDigit(39, 7, data))
-    {
-        errors[2] = 3;
-    }
-    if (!TotalCheckDigitTD1(data))
-    {
-        errors[3] = 4;
-    }
+    errors[1] = CheckDigit(31, 7, data);
+    errors[2] = CheckDigit(39, 7, data);
+    errors[3] = TotalCheckDigitTD1(data);
     return errors;
 
 }
 
 /* Description: Checks if Travel Document Ver. 2 is valid
  *
- * Author: Andy Wang   Nov. 21, 2021
+ * Author: Andy Wang   June 7, 2023
  *
  * Return: 
  * Array that stores errors based on index:
- *         0 - succeed, 
- *         1 - First Check Digit Failed, 
- *         2 - Second Check Digit Failed,
- *         3 - Third Check Digit Failed, 
- *         4 - Overall Check Digit Failed,
- *         5 - Invalid First Country Code,
- *         6 - Invalid Second Country Code,
- *         7 - Invalid Docuent Type,
+ *         0 - First Check Digit Failed, 
+ *         1 - Second Check Digit Failed,
+ *         2 - Third Check Digit Failed, 
+ *         3 - Overall Check Digit Failed,
+ *         4 - Invalid First Country Code,
+ *         5 - Invalid Second Country Code,
+ *         6 - Invalid Document Type
  *********************************/
 int* VerifyTD2()
 {
-    static int errors[8];
+    static int errors[7];
     std::fill(errors, errors + _countof(errors), 0);
     int data[200];
     int i;
@@ -1013,22 +969,10 @@ int* VerifyTD2()
     {
         errors[5] = 6;
     }
-    if (!CheckDigit(37, 10, data))
-    {
-        errors[0] = 1;
-    }
-    if (!CheckDigit(50, 7, data))
-    {
-        errors[1] = 2;
-    }
-    if (!CheckDigit(58, 7, data))
-    {
-        errors[2] = 3;
-    }
-    if (!TotalCheckDigitTD2(data))
-    {
-        errors[3] = 4;
-    }
+    errors[0] = CheckDigit(37, 10, data);
+    errors[1] = CheckDigit(50, 7, data);
+    errors[2] = CheckDigit(58, 7, data);
+    errors[3] = TotalCheckDigitTD2(data);
     return errors;
 }
 
@@ -1072,6 +1016,7 @@ HRESULT BasicFileOpen(HWND hWnd)
 
                         if (myfile.is_open()) 
                         {
+                            TotalLine.clear();
                             while (std::getline(myfile, line))
                             {
                                 std::cout << line << '\n';
@@ -1107,12 +1052,12 @@ HRESULT BasicFileOpen(HWND hWnd)
 /* Description: Creates modular message boxes based on
  * errors and document type
  *
- * Author: Andy Wang   April 7, 2023
+ * Author: Andy Wang   June 7, 2023
  *
  * param [int] errors[] - array storing the errors present
  *        int  docType - represents the document type
  *********************************************************/
-void CreateMessageBox(int errors[], int docType)
+void CreateMessageBox(int errors[], int arrayLength, int docType)
 {
     std::wstring documentTypes[] = {
     L"Passport",
@@ -1131,39 +1076,52 @@ void CreateMessageBox(int errors[], int docType)
     L"Invalid Document Type",
     L" Failed Optional Check Digit"
     };
+    std::wstring infoMessages[] = {
+        L"The first check digit should be: ",
+        L"The second check digit should be: ",
+        L"The third check digit should be: ",
+        L"The overall check digit should be: ",
+        L"The optional check digit should be: ",
+        L", the document shows: "
+    };
     std::wstring finalErrorMessage;
+    std::wstring finalInfoMessage;
+    boolean invalidType = false;
+    boolean hasCheckSumError = false;
     int counter = 0;
     int msgboxID;
     int i;
     int mm = 0;
     int errorArrContent;
-
     if (docType == 2) {
-        for (i = 0; i < 6; i++)
+        for (i = 0; i < arrayLength; i++)
         {
             errorArrContent = *(errors + i);
             mm = i;
             mm++;
 
-            if (errorArrContent == 6) {
+            if (i == 5 && errorArrContent != 0) {
                 finalErrorMessage = errorMessages[6];
+                invalidType = true;
                 break;
             }
             if (errorArrContent != 0) {
                 counter++;
                 if (counter == 1) {
-                    if (errorArrContent == 4 || errorArrContent == 5) {
+                    if (i == 3 || i == 4) {
                         finalErrorMessage = documentTypes[docType] + (errorMessages[i + 1]);
                     }
                     else {
+                        hasCheckSumError = true;
                         finalErrorMessage = documentTypes[docType] + (errorMessages[i]);
                     }
                 }
                 else {
-                    if (errorArrContent == 4 || errorArrContent == 5) {
+                    if (i == 3 || i == 4) {
                         finalErrorMessage = finalErrorMessage.append(L"\n" + documentTypes[docType] + (errorMessages[i + 1]));
                     }
                     else {
+                        hasCheckSumError = true;
                         finalErrorMessage = finalErrorMessage.append(L"\n" + documentTypes[docType] + (errorMessages[i]));;
                     }
                 }
@@ -1183,22 +1141,32 @@ void CreateMessageBox(int errors[], int docType)
     }
     else {
         
-        for (i = 0; i < 8; i++)
+        for (i = 0; i < arrayLength; i++)
         {
             errorArrContent = *(errors + i);
             mm = i;
             mm++;
 
-            if (errorArrContent == 7) {
+            if (i == 6 && errorArrContent != 0) {
                 finalErrorMessage = errorMessages[6];
+                invalidType = true;
                 break;
             }
             if (errorArrContent != 0) {
                 counter++;
+                if (i <= 3 || i == 7) {
+                    hasCheckSumError = true;
+                }
                 if (counter == 1) {
+                    if (i == 7) {
+                        finalErrorMessage = documentTypes[docType] + (errorMessages[8]);
+                    }
                     finalErrorMessage = documentTypes[docType] + (errorMessages[i]);
                 }
                 else {
+                    if (i == 7) {
+                        finalErrorMessage = finalErrorMessage.append(L"\n" + documentTypes[docType] + (errorMessages[8]));
+                    }
                     finalErrorMessage = finalErrorMessage.append(L"\n" + documentTypes[docType] + (errorMessages[i]));
                 }
             }
@@ -1215,13 +1183,92 @@ void CreateMessageBox(int errors[], int docType)
             return;
         }
     }
-    msgboxID = MessageBox
-    (
-        NULL,
-        finalErrorMessage.c_str(),
-        L"Passport Verification",
-        MB_ICONERROR | MB_OK
-    );
+    if (!invalidType && hasCheckSumError) {
+        if (counter == 1) {
+            finalErrorMessage.append(L"\n\nWould you like to see the errored character?");
+        }
+        else if (counter > 1) {
+            finalErrorMessage.append(L"\n\nWould you like to see the errored characters?");
+        }
+        msgboxID = MessageBox
+        (
+            NULL,
+            finalErrorMessage.c_str(),
+            L"Passport Verification",
+            MB_ICONERROR | MB_YESNO
+        );
+        counter = 0;
+        int newMsgBoxID;
+        switch (msgboxID)
+        {
+        case IDYES:
+            if (docType == 2) {
+                for (i = 0; i < arrayLength; i++) {
+                    if (i >= 3 && i <= 5) {
+                        continue;
+                    }
+                    if (errors[i] == 0) {
+                        continue;
+                    }
+                    else {
+                        counter++;
+                        if (counter == 1) {
+                            finalInfoMessage = infoMessages[i] + std::to_wstring(errors[i] / 10) + infoMessages[5] + std::to_wstring(errors[i] % 10);
+                        }
+                        else {
+                            finalInfoMessage.append(L"\n" + infoMessages[i] + std::to_wstring(errors[i] / 10) + infoMessages[5] + std::to_wstring(errors[i] % 10));
+                        }
+                    }
+
+                }
+            }
+            else {
+                for (i = 0; i < arrayLength; i++) {
+                    if (i >= 4 && i <= 6) {
+                        continue;
+                    }
+                    if (errors[i] == 0) {
+                        continue;
+                    }
+                    else {
+                        counter++;
+                        if (counter == 1) {
+                            if (i == 7) {
+                                finalInfoMessage = infoMessages[4] + std::to_wstring(errors[i] / 10) + infoMessages[5] + std::to_wstring(errors[i] % 10);
+                                break;
+                            }
+                            finalInfoMessage = infoMessages[i] + std::to_wstring(errors[i] / 10) + infoMessages[5] + std::to_wstring(errors[i] % 10);
+                        }
+                        else {
+                            if (i == 7) {
+                                finalInfoMessage.append(L"\n" + infoMessages[4] + std::to_wstring(errors[i] / 10) + infoMessages[5] + std::to_wstring(errors[i] % 10));
+                                break;
+                            }
+                            finalInfoMessage.append(L"\n" + infoMessages[i] + std::to_wstring(errors[i] / 10) + infoMessages[5] + std::to_wstring(errors[i] % 10));
+                        }
+                    }
+
+                }
+            }
+            newMsgBoxID = MessageBox(
+                NULL,
+                finalInfoMessage.c_str(),
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break;
+        default:
+            break;
+        }
+    }
+    else {
+        msgboxID = MessageBox(
+            NULL,
+            finalErrorMessage.c_str(),
+            L"Passport Verification",
+            MB_ICONERROR | MB_OK
+        );
+    }
 }
 void PassportCheck()
 {
@@ -1229,24 +1276,21 @@ void PassportCheck()
     int counter = 0;
     int msgboxID;
     t = VerifyPassport();
-    TotalLine.clear();
-    CreateMessageBox(t, 0);
+    CreateMessageBox(t, 8, 0);
 }
 void VisaACheck() {
     int* t;
     int msgboxID;
     int counter = 0;
     t = VerifyVisaA();
-    TotalLine.clear();
-    CreateMessageBox(t, 1);
+    CreateMessageBox(t, 7, 1);
 }
 void VisaBCheck() {
     int* t;
     int msgboxID;
     int counter = 0;
     t = VerifyVisaB();
-    TotalLine.clear();
-    CreateMessageBox(t, 2);
+    CreateMessageBox(t, 6, 2);
 }
 void TD1Check()
 {
@@ -1254,8 +1298,7 @@ void TD1Check()
     int msgboxID;
     int counter = 0;
     t = VerifyTD1();
-    TotalLine.clear();
-    CreateMessageBox(t, 3);
+    CreateMessageBox(t, 7, 3);
 }
 void TD2Check()
 {
@@ -1263,8 +1306,7 @@ void TD2Check()
     int msgboxID;
     int counter = 0;
     t = VerifyTD2();
-    TotalLine.clear();
-    CreateMessageBox(t, 4);
+    CreateMessageBox(t, 7, 4);
 }
 void ErrorDoc()
 {
@@ -1272,10 +1314,33 @@ void ErrorDoc()
     msgboxID = MessageBox
     (
         NULL,
-        L"Document Type Nonexistent",
+        L"Document Type Nonexistent\nWould you like to see the errored character?",
         L"Passport Verification",
-        MB_ICONERROR | MB_OK
+        MB_ICONERROR | MB_YESNO
     );
+
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wide;
+    std::wstring emptySpace = L"";
+    int temp;
+    switch (msgboxID)
+    {
+        case IDYES:
+            wide = converter.from_bytes(TotalLine[0]);
+            temp = MessageBox(
+                NULL,
+                emptySpace.append(L"Errored Character: ").append(wide)
+                .append(L"\nLine 1, Character 1")
+                .append(L"Reason: Beginning Character Not Valid").c_str(),
+                L"Passport Verification",
+                MB_ICONERROR | MB_OK
+            );
+            break;
+        case IDNO:
+            break;
+        default:
+            break;
+    }
 }
 
 
