@@ -1,5 +1,3 @@
-# # TDVerification
-#### Video Demo: https://youtu.be/4WXS1louUw4
 #### Description:
 TDVerification is an application designed to validate various travel document types based on checksums
 set by the ICAO (International Civil Aviation Organization).
