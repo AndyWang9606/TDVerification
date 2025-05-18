@@ -449,20 +449,35 @@ int binarySearch(int start, int end, std::string code)
     }
     return -1;
 }
-// Add in code-x parameter for multiple incorrect country code
+
+/* Description: Checks if country codes are valid
+ *
+ * Author: Andy Wang   May 15, 2025
+ *
+ * Return: 0, 1, or 2
+ *      0 - country code passed
+ *      1 - Issuing country code failed
+ *      2 - Nationality country code failed
+ * param [in] TDType - Type of Travel Document being checked.
+ * param [in] code - Determines which country code is currently being checked
+ *********************************/
 int CountryCodeCheck(int TDType, int code)
 {
     std::string code1, code2;
+    int end = sizeof(CountryCode) / sizeof(CountryCode[0]);
     switch (TDType)
     {
     case 1:   //Passport
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(55, 3);
-        if(binarySearch(0, 248, code1) == -1 && code == 1)
+        if (code == 1 && (code1 == "XXA" || code1 == "XXB" || code1 == "XXC" || code1 == "XXX")) {
+            return 1;
+        }
+        if(binarySearch(0, end, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1 && code == 2)
+        if (binarySearch(0, end, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -470,11 +485,14 @@ int CountryCodeCheck(int TDType, int code)
     case 2:   //VisaA
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(55, 3);
-        if (binarySearch(0, 248, code1) == -1 && code == 1)
+        if (code == 1 && (code1 == "XXA" || code1 == "XXB" || code1 == "XXC" || code1 == "XXX")) {
+            return 1;
+        }
+        if (binarySearch(0, end, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1 && code == 2)
+        if (binarySearch(0, end, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -482,11 +500,14 @@ int CountryCodeCheck(int TDType, int code)
     case 3:   //VisaB
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(47, 3);
-        if (binarySearch(0, 248, code1) == -1 && code == 1)
+        if (code == 1 && (code1 == "XXA" || code1 == "XXB" || code1 == "XXC" || code1 == "XXX")) {
+            return 1;
+        }
+        if (binarySearch(0, end, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1 && code == 2)
+        if (binarySearch(0, end, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -494,11 +515,14 @@ int CountryCodeCheck(int TDType, int code)
     case 4:   //TD1
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(46, 3);
-        if (binarySearch(0, 248, code1) == -1 && code == 1)
+        if (code == 1 && (code1 == "XXA" || code1 == "XXB" || code1 == "XXC" || code1 == "XXX")) {
+            return 1;
+        }
+        if (binarySearch(0, end, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1 && code == 2)
+        if (binarySearch(0, end, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -506,11 +530,14 @@ int CountryCodeCheck(int TDType, int code)
     case 5:   //TD2
         code1 = TotalLine.substr(2, 3);
         code2 = TotalLine.substr(47, 3);
-        if (binarySearch(0, 248, code1) == -1 && code == 1)
+        if (code == 1 && (code1 == "XXA" || code1 == "XXB" || code1 == "XXC" || code1 == "XXX")) {
+            return 1;
+        }
+        if (binarySearch(0, end, code1) == -1 && code == 1)
         {
             return 1;
         }
-        if (binarySearch(0, 248, code2) == -1 && code == 2)
+        if (binarySearch(0, end, code2) == -1 && code == 2)
         {
             return 2;
         }
@@ -774,8 +801,8 @@ int TotalCheckDigitVisaA(int a[])
  *         1 - Second Check Digit Failed,
  *         2 - Third Check Digit Failed,
  *         3 - Overall Check Digit Failed,
- *         4 - Invalid First Country Code,
- *         5 - Invalid Second Country Code,
+ *         4 - Invalid Issuing Country Code,
+ *         5 - Invalid Nationality Country Code,
  *         6 - Invalid Document Type
  *         7 - Optional Check Digit Failed
  *********************************/
@@ -815,8 +842,8 @@ int* VerifyPassport()
  *         1 - Second Check Digit Failed,
  *         2 - Third Check Digit Failed,
  *         3 - Overall Check Digit Failed,
- *         4 - Invalid First Country Code,
- *         5 - Invalid Second Country Code,
+ *         4 - Invalid Issuing Country Code,
+ *         5 - Invalid Nationality Country Code,
  *         6 - Invalid Document Type
  *********************************/
 int* VerifyVisaA() {
@@ -852,8 +879,8 @@ int* VerifyVisaA() {
  *         0 - First Check Digit Failed, 
  *         1 - Second Check Digit Failed,
  *         2 - Third Check Digit Failed, 
- *         3 - Invalid First Country Code,
- *         4 - Invalid Second Country Code,
+ *         3 - Invalid Issuing Country Code,
+ *         4 - Invalid Nationality Country Code,
  *         5 - Invalid Document Type
  *********************************/
 int* VerifyVisaB() {
@@ -889,8 +916,8 @@ int* VerifyVisaB() {
  *         1 - Second Check Digit Failed,
  *         2 - Third Check Digit Failed, 
  *         3 - Overall Check Digit Failed,
- *         4 - Invalid First Country Code,
- *         5 - Invalid Second Country Code,
+ *         4 - Invalid Issuing Country Code,
+ *         5 - Invalid Nationality Country Code,
  *         6 - Invalid Document Type
  *********************************/
 int* VerifyTD1() {
@@ -945,8 +972,8 @@ int* VerifyTD1() {
  *         1 - Second Check Digit Failed,
  *         2 - Third Check Digit Failed, 
  *         3 - Overall Check Digit Failed,
- *         4 - Invalid First Country Code,
- *         5 - Invalid Second Country Code,
+ *         4 - Invalid Issuing Country Code,
+ *         5 - Invalid Nationality Country Code,
  *         6 - Invalid Document Type
  *********************************/
 int* VerifyTD2()
@@ -1071,8 +1098,8 @@ void CreateMessageBox(int errors[], int arrayLength, int docType)
     L" Failed Second Check Digit",
     L" Failed Third Check Digit",
     L" Failed Overall Check Digit",
-    L" Has Invalid First Country Code",
-    L" Has Invalid Second Country Code",
+    L" Has Invalid Issuing Country Code",
+    L" Has Invalid Nationality Country Code",
     L"Invalid Document Type",
     L" Failed Optional Check Digit"
     };
@@ -1158,15 +1185,9 @@ void CreateMessageBox(int errors[], int arrayLength, int docType)
                     hasCheckSumError = true;
                 }
                 if (counter == 1) {
-                    if (i == 7) {
-                        finalErrorMessage = documentTypes[docType] + (errorMessages[8]);
-                    }
                     finalErrorMessage = documentTypes[docType] + (errorMessages[i]);
                 }
                 else {
-                    if (i == 7) {
-                        finalErrorMessage = finalErrorMessage.append(L"\n" + documentTypes[docType] + (errorMessages[8]));
-                    }
                     finalErrorMessage = finalErrorMessage.append(L"\n" + documentTypes[docType] + (errorMessages[i]));
                 }
             }
@@ -1331,7 +1352,7 @@ void ErrorDoc()
                 NULL,
                 emptySpace.append(L"Errored Character: ").append(wide)
                 .append(L"\nLine 1, Character 1")
-                .append(L"Reason: Beginning Character Not Valid").c_str(),
+                .append(L"\nReason: Beginning Character Not Valid").c_str(),
                 L"Passport Verification",
                 MB_ICONERROR | MB_OK
             );
@@ -1341,6 +1362,18 @@ void ErrorDoc()
         default:
             break;
     }
+}
+
+void IncorrectLength()
+{
+    int msgboxID;
+    msgboxID = MessageBox
+    (
+        NULL,
+        L"Incorrect length for current document type",
+        L"Passport Verification",
+        MB_ICONERROR
+    );
 }
 
 
@@ -1384,11 +1417,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         if (TotalLine.length() == 90)
                         {
                             VisaACheck();
+                            break;
                         }
                         if (TotalLine.length() == 74)
                         {
                             VisaBCheck();
+                            break;
                         }
+                        IncorrectLength();
                         break;
                     case 'A':
                     case 'C':
@@ -1403,6 +1439,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             TD2Check();
                             break;
                         }
+                        IncorrectLength();
                         break;
                     default:
                         ErrorDoc();
